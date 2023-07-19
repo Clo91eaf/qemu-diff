@@ -1,10 +1,11 @@
 use crate::protocol::{self, GdbConn};
 use std::io::Write;
 
-pub fn gdb_connect_qemu(port: u16) {
+pub fn gdb_connect_qemu(port: u16) -> GdbConn {
     loop {
-        if protocol::gdb_begin_inet("localhost", port).is_ok() {
-            break;
+        let conn =  protocol::gdb_begin_inet("localhost", port);
+        if conn.is_ok() {
+            return conn.unwrap();
         }
     }
 }
@@ -12,11 +13,7 @@ pub fn gdb_connect_qemu(port: u16) {
 fn gdb_memcpy_to_qemu_small(conn: &mut GdbConn, dest: u32, src: &[u8]) {
     let mut buf = Vec::with_capacity(src.len() * 2 + 128);
     write!(buf, "M0x{:x},{:x}:", dest, src.len()).unwrap();
-    write!(
-        buf,
-        "{:x}",
-        u8::from_str_radix(std::str::from_utf8(src).unwrap(), 16).unwrap()
-    );
+    write!(buf, "{:x}", u8::from_str_radix(std::str::from_utf8(src).unwrap(), 16).unwrap()).unwrap();
 
     conn.send(&buf).unwrap();
 
@@ -25,7 +22,7 @@ fn gdb_memcpy_to_qemu_small(conn: &mut GdbConn, dest: u32, src: &[u8]) {
     assert_eq!(reply, "OK");
 }
 
-fn gdb_memcpy_to_qemu(conn: &mut GdbConn, dest: u32, src: &[u8]) {
+pub fn gdb_memcpy_to_qemu(conn: &mut GdbConn, dest: u32, src: &[u8]) {
     const MTU: usize = 1500;
     let mut offset = 0;
 
@@ -37,7 +34,7 @@ fn gdb_memcpy_to_qemu(conn: &mut GdbConn, dest: u32, src: &[u8]) {
     }
 }
 
-fn gdb_getregs(conn: &mut GdbConn, r: &mut [u32; 43]) {
+pub fn gdb_getregs(conn: &mut GdbConn, r: &mut [u32; 43]) {
     // Send the "g" packet to request registers data
     conn.send(b"g").unwrap();
 
@@ -52,7 +49,7 @@ fn gdb_getregs(conn: &mut GdbConn, r: &mut [u32; 43]) {
     }
 }
 
-fn gdb_setregs(conn: &mut GdbConn, r: &[u32; 43]) {
+pub fn gdb_setregs(conn: &mut GdbConn, r: &[u32; 43]) {
     let mut buf = Vec::with_capacity(r.len() * 8 + 1);
     buf.push(b'G');
     for reg in r.iter() {
@@ -66,7 +63,7 @@ fn gdb_setregs(conn: &mut GdbConn, r: &[u32; 43]) {
     assert_eq!(reply, "OK");
 }
 
-fn gdb_si(conn: &mut GdbConn) {
+pub fn gdb_si(conn: &mut GdbConn) {
     let buf = "vCont;s:1";
     conn.send(buf.as_bytes()).unwrap();
 }

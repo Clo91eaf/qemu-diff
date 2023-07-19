@@ -1,40 +1,54 @@
 mod gdb;
 mod protocol;
 
-use gdb::gdb_connect_qemu;
+use gdb::{gdb_connect_qemu, gdb_getregs, gdb_memcpy_to_qemu, gdb_setregs, gdb_si};
+use protocol::GdbConn;
 use std::process::{Command, Stdio};
 
-fn difftest_init(port: u16) {
-    let _ = Command::new("qemu-system-riscv64")
-        .arg("-S")
-        .arg("-gdb")
-        .arg("tcp::{port}")
-        .arg("-nographic")
-        .arg("-serial")
-        .arg("none")
-        .arg("-monitor")
-        .arg("none")
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn();
-
-    gdb_connect_qemu(port);
+pub struct Difftest {
+    conn: GdbConn,
 }
 
-pub fn difftest_memcpy(dest: &mut [u8], src: &[u8]) {
-    todo!("difftest_memcpy")
-}
+impl Difftest {
+    pub fn new(mut self, port: u16) {
+        let _ = Command::new("qemu-system-riscv64")
+            .arg("-S")
+            .arg("-gdb")
+            .arg("tcp::{port}")
+            .arg("-nographic")
+            .arg("-serial")
+            .arg("none")
+            .arg("-monitor")
+            .arg("none")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn();
 
-pub fn difftest_regcpy(dest: &mut [u8], src: &[u8]) {
-    todo!("difftest_regcpy")
-}
+        self.conn = gdb_connect_qemu(port);
+    }
 
-pub fn difftest_exec() {
-    todo!("difftest_exec")
-}
+    pub fn memcpy(&mut self, dest: &mut [u8], src: &[u8]) {
+        gdb_memcpy_to_qemu(&mut self.conn, dest.as_ptr() as u32, src);
+    }
 
-pub fn difftest_error() {
-    todo!("difftest_error")
+    // if direction == true, copy from src to qemu
+    pub fn regcpy(&mut self, r: &mut [u32; 43], direction: bool) {
+        if direction {
+            gdb_setregs(&mut self.conn, r);
+        } else {
+            gdb_getregs(&mut self.conn, r);
+        }
+    }
+
+    pub fn exec(&mut self, n: u64) {
+        for _ in 0..n {
+            gdb_si(&mut self.conn);
+        }
+    }
+
+    pub fn error() {
+        todo!("difftest_error")
+    }
 }
 
 #[cfg(test)]
