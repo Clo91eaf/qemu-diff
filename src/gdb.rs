@@ -1,6 +1,7 @@
 use crate::protocol::{self, GdbConn};
 use std::io::Write;
 
+// Connect to QEMU's GDB server
 pub fn gdb_connect_qemu(port: u16) -> GdbConn {
     loop {
         let conn =  protocol::gdb_begin_inet("localhost", port);
@@ -64,6 +65,5 @@ pub fn gdb_setregs(conn: &mut GdbConn, r: &[u32; 43]) {
 }
 
 pub fn gdb_si(conn: &mut GdbConn) {
-    let buf = "vCont;s:1";
-    conn.send(buf.as_bytes()).unwrap();
+    conn.send(b"vCont;s:1").unwrap();
 }

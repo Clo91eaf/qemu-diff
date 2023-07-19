@@ -11,6 +11,7 @@ pub struct Difftest {
 
 impl Difftest {
     pub fn new(mut self, port: u16) {
+        // start qemu
         let _ = Command::new("qemu-system-riscv64")
             .arg("-S")
             .arg("-gdb")
@@ -41,22 +42,6 @@ impl Difftest {
     }
 
     pub fn exec(&mut self, n: u64) {
-        for _ in 0..n {
-            gdb_si(&mut self.conn);
-        }
-    }
-
-    pub fn error() {
-        todo!("difftest_error")
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_difftest_init() {
-        difftest_init(1145);
+        (0..n).for_each(|_| gdb_si(&mut self.conn));
     }
 }

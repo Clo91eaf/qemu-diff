@@ -60,7 +60,6 @@ impl GdbConn {
                     return Ok((reply, ret_sum_ok));
                 }
                 b'}' => {
-                    // Escape: next char is XOR 0x20
                     escape = true;
                 }
                 b'*' => {
@@ -132,15 +131,6 @@ impl GdbConn {
         }
 
         Ok(reply)
-    }
-
-    fn start_no_ack(&mut self) -> io::Result<()> {
-        let cmd = b"QStartNoAckMode";
-        self.send(cmd)?;
-        let reply = self.recv()?;
-        let ok = reply == b"OK";
-        self.ack = !ok;
-        Ok(())
     }
 }
 
