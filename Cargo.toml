@@ -1,4 +1,4 @@
 [package]
-name = "qemu-diff"
+name = "qemu_difftest"
 version = "0.1.0"
 edition = "2021"

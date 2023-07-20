@@ -8,7 +8,7 @@ pub struct GdbConn {
 }
 
 impl GdbConn {
-    fn new(reader: TcpStream, writer: TcpStream) -> Self {
+    pub fn new(reader: TcpStream, writer: TcpStream) -> Self {
         Self {
             reader: BufReader::new(reader),
             writer,

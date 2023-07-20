@@ -6,11 +6,15 @@ use protocol::GdbConn;
 use std::process::{Command, Stdio};
 
 pub struct Difftest {
-    conn: GdbConn,
+    conn: Option<GdbConn>,
 }
 
 impl Difftest {
-    pub fn new(mut self, port: u16) {
+    pub fn new() -> Self {
+        Difftest { conn: None }
+    }
+
+    pub fn init(mut self, port: u16) {
         // start qemu
         let _ = Command::new("qemu-system-riscv64")
             .arg("-S")
@@ -25,7 +29,7 @@ impl Difftest {
             .stderr(Stdio::null())
             .spawn();
 
-        self.conn = gdb_connect_qemu(port);
+        self.conn = Some(gdb_connect_qemu(port));
     }
 
     pub fn memcpy(&mut self, dest: &mut [u8], src: &[u8]) {
